@@ -1,0 +1,20 @@
+# Virtual environment — never commit this, it's machine-specific
+venv/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+
+# Environment variables (secrets, API keys, DB passwords)
+.env
+
+# SQLite database file (we'll create this later)
+*.db
+*.sqlite
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# VS Code workspace settings
+.vscode/
