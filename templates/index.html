@@ -35,7 +35,10 @@
                         </div>
                         <div class="mb-3">
                             <label for="phone" class="form-label">Phone</label>
-                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                            pattern="^\+?[0-9][0-9\s\-]{6,14}[0-9]$"
+                            title="7-15 digits. Spaces, +, and - are allowed."
+                            required>
                         </div>
                         <div class="mb-3">
                             <label for="service" class="form-label">Service Needed</label>
@@ -47,7 +50,17 @@
                                 <option value="tax_planning">Tax Planning</option>
                                 <option value="other">Other</option>
                             </select>
+                        </div>
 
+                        <div class="mb-3">
+                                <label for="budget" class="form-label">Investment Budget</label>
+                                <select class="form-select" id="budget" name="budget" required>
+                                    <option value="">Select a range...</option>
+                                    <option value="under_50k">Under ₹50,000</option>
+                                    <option value="50k_2L">₹50,000 — ₹2 Lakh</option>
+                                    <option value="2L_10L">₹2 Lakh — ₹10 Lakh</option>
+                                    <option value="10L_plus">₹10 Lakh+</option>
+                                </select>
                         </div>
                         <div class="mb-4">
                             <label for="notes" class="form-label">Notes <span class="text-muted">(Optional)</span></label>
