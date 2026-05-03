@@ -39,6 +39,7 @@ def submit():
     notes = request.form.get("notes").strip()
     
     # server side validation
+    print(f"DEBUG: service='{service}' budget='{budget}'")
     errors = []
      
     if not name:
@@ -61,23 +62,39 @@ def submit():
     if errors:
         print("Validation FAILED")
     
-    for err in errors:
-        print(f"-{err}")
-    print("-----")
-    return "<h3>Validation FAILED.</h3>", 400
+        for err in errors:
+            print(f"-{err}")
+        print("-----")
+        return "<h3>Validation FAILED.</h3>", 400
     
     
 
 
-    print("---- New Enquiry ----")
-    print(f"Name:     {name}")
-    print(f"Email:    {email}")
-    print(f"Phone:    {phone}")
-    print(f"Service:  {service}")
-    print(f"Budget:   {budget}")
-    print(f"Notes:    {notes}")
-    print(f"--------------------")
-    
+    # print("---- New Enquiry ----") (to check before database config)
+    # print(f"Name:     {name}")
+    # print(f"Email:    {email}")
+    # print(f"Phone:    {phone}")
+    # print(f"Service:  {service}")
+    # print(f"Budget:   {budget}")
+    # print(f"Notes:    {notes}")
+    # print(f"--------------------")
+ 
+    #Saving to the database
+    new_enquiry = Enquiry(
+        name=name,
+        email=email,
+        phone=phone,
+        service=service,
+        budget=budget,
+        notes=notes if notes else None
+    )
+    db.session.add(new_enquiry)
+    db.session.commit()
+
+    print(f"Saved Enquiry #{new_enquiry.id} from {name}")
+    return redirect(url_for("thanks"))
+
+
     #Adding a PRG redirecting to a thank you page
     return redirect(url_for("thanks"))
 
