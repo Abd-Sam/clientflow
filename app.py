@@ -1,6 +1,28 @@
 from flask import Flask, render_template, request, redirect,url_for
 import re
+from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
+
+
+# configuring the database
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///clientflow.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+class Enquiry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    service = db.Column(db.String(40), nullable=False)
+    budget = db.Column(db.String(20), nullable=False)
+    notes = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20),nullable=False, default="new")
+    created_at = db.Column(db.DateTime, nullable=False, default=db.func.now())
+
+    def __repr__(self):
+        return f"<Enquiry {self.id}: {self.name}>"
 
 @app.route("/")
 def home():
