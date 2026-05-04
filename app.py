@@ -1,14 +1,32 @@
-from flask import Flask, render_template, request, redirect,url_for
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, redirect, url_for, session
 import re
 from flask_sqlalchemy import SQLAlchemy
-app = Flask(__name__)
+from functools import wraps
+import os 
+from dotenv import load_dotenv
 
+load_dotenv()
+
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+
+app.permanent_session_lifetime = timedelta(minutes=30)
 
 # configuring the database
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///clientflow.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
 
 class Enquiry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -23,6 +41,16 @@ class Enquiry(db.Model):
 
     def __repr__(self):
         return f"<Enquiry {self.id}: {self.name}>"
+
+
+
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args,**kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return wrapper
 
 @app.route("/")
 def home():
@@ -67,10 +95,7 @@ def submit():
         print("-----")
         return "<h3>Validation FAILED.</h3>", 400
     
-    
-
-
-    # print("---- New Enquiry ----") (to check before database config)
+        # print("---- New Enquiry ----") (to check before database config)
     # print(f"Name:     {name}")
     # print(f"Email:    {email}")
     # print(f"Phone:    {phone}")
@@ -102,6 +127,31 @@ def submit():
 def thanks():
     return render_template("thanks.html")
 
+
+@app.route("/login",methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get("username")
+        password = request.form.get("password")
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            session.permanent=True
+            session['user_id']=user.id
+            return redirect(url_for("admin"))    
+        return render_template('login.html', error="Invalid username or password")
+    return render_template('login.html')
+
+
+@app.route('/admin')
+def admin():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return "Admin dashboard"
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id',None)
+    return redirect(url_for("home"))
 
 if __name__ == "__main__":
     app.run(debug=True)
