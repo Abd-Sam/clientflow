@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import re
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
@@ -11,9 +11,13 @@ load_dotenv()
 
 
 app = Flask(__name__)
+
 app.secret_key = os.environ.get('SECRET_KEY')
 
 app.permanent_session_lifetime = timedelta(minutes=30)
+
+STATUS_ORDER = ["new", "contacted", "in_progress", "closed"]
+ALLOWED_STATUSES = set(STATUS_ORDER)
 
 # configuring the database
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///clientflow.db"
@@ -143,15 +147,33 @@ def login():
 
 
 @app.route('/admin')
+@login_required
 def admin():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    return "Admin dashboard"
+    enquiries = Enquiry.query.order_by(Enquiry.created_at.desc()).all()
+    return render_template('admin.html', enquiries=enquiries, allowed_statuses=STATUS_ORDER)
+
 
 @app.route('/logout')
 def logout():
     session.pop('user_id',None)
     return redirect(url_for("home"))
+
+@app.route('/admin/enquiries/<int:id>/status', methods=['POST'])
+@login_required
+def update_status(id):
+    enquiry = Enquiry.query.get_or_404(id)
+    data = request.get_json()
+    
+    new_status = data.get('status')
+    if new_status not in ALLOWED_STATUSES:
+        return jsonify({'error': 'Invalid Status'}),400
+    
+    enquiry.status = new_status
+    db.session.commit()
+ 
+    return jsonify({'success': True, 'status': new_status})
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
